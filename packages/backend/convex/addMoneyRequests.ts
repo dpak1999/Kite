@@ -120,7 +120,7 @@ export const getAllRequests = query({
     if (args.status) {
       requests = await ctx.db
         .query("addMoneyRequests")
-        .withIndex("by_status", (q) => q.eq("status", args.status))
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
         .order("desc")
         .collect();
     } else {

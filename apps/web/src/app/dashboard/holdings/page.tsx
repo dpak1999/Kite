@@ -246,10 +246,10 @@ export default function HoldingsPage() {
                     {holding.quantity}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
-                    ₹{holding.avgBuyPrice.toFixed(2)}
+                    ₹{holding.avgBuyPrice?.toFixed(2) || 'N/A'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-right font-medium text-gray-900">
-                    ₹{holding.totalInvested.toLocaleString()}
+                    ₹{holding.totalInvested?.toLocaleString() || 'N/A'}
                   </td>
                 </tr>
               ))}
@@ -316,13 +316,13 @@ export default function HoldingsPage() {
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
-                    {holding.units.toFixed(3)}
+                    {holding.units?.toFixed(3) || 'N/A'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
-                    ₹{holding.avgNav.toFixed(2)}
+                    ₹{holding.avgNav?.toFixed(2) || 'N/A'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-right font-medium text-gray-900">
-                    ₹{holding.totalInvested.toLocaleString()}
+                    ₹{holding.totalInvested?.toLocaleString() || 'N/A'}
                   </td>
                 </tr>
               ))}

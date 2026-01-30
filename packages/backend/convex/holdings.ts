@@ -455,8 +455,8 @@ export const getHoldingsSummary = query({
     const uniqueUsersWithStocks = new Set(stockHoldings.map((h) => h.userId));
     const uniqueUsersWithMFs = new Set(mfHoldings.map((h) => h.userId));
     const allUsersWithHoldings = new Set([
-      ...uniqueUsersWithStocks,
-      ...uniqueUsersWithMFs,
+      ...Array.from(uniqueUsersWithStocks),
+      ...Array.from(uniqueUsersWithMFs),
     ]);
 
     const totalStockInvested = stockHoldings.reduce(

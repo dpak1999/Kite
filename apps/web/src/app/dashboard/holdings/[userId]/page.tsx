@@ -164,9 +164,9 @@ export default function UserHoldingsPage() {
   };
 
   const totalStockValue =
-    portfolio?.stocks.reduce((sum, h) => sum + h.totalInvested, 0) || 0;
+    portfolio?.stocks.reduce((sum, h) => sum + h.holding.totalInvested, 0) || 0;
   const totalMFValue =
-    portfolio?.mutualFunds.reduce((sum, h) => sum + h.totalInvested, 0) || 0;
+    portfolio?.mutualFunds.reduce((sum, h) => sum + h.holding.totalInvested, 0) || 0;
 
   if (!mounted) return null;
 
@@ -271,38 +271,38 @@ export default function UserHoldingsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {portfolio?.stocks.map((h) => (
-              <tr key={h._id} className="hover:bg-gray-50">
+            {portfolio?.stocks.map((item) => (
+              <tr key={item.holding._id} className="hover:bg-gray-50">
                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
                   <div className="font-medium text-gray-900">
-                    {h.stock?.symbol}
+                    {item.stock?.symbol}
                   </div>
                   <div className="text-gray-500 text-xs">
-                    {h.stock?.companyName}
+                    {item.stock?.companyName}
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
-                  {h.quantity}
+                  {item.holding.quantity}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
-                  ₹{h.avgBuyPrice.toFixed(2)}
+                  ₹{item.holding.avgBuyPrice.toFixed(2)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right font-medium text-gray-900">
-                  ₹{h.totalInvested.toLocaleString()}
+                  ₹{item.holding.totalInvested.toLocaleString()}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
                   <button
                     onClick={() => {
-                      setEditingStock(h);
-                      setFormQty(h.quantity.toString());
-                      setFormPrice(h.avgBuyPrice.toString());
+                      setEditingStock(item.holding);
+                      setFormQty(item.holding.quantity.toString());
+                      setFormPrice(item.holding.avgBuyPrice.toString());
                     }}
                     className="text-blue-600 hover:text-blue-500 mr-3"
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteStock(h._id)}
+                    onClick={() => handleDeleteStock(item.holding._id)}
                     className="text-red-600 hover:text-red-500"
                   >
                     <TrashIcon className="h-4 w-4" />
@@ -355,35 +355,35 @@ export default function UserHoldingsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {portfolio?.mutualFunds.map((h) => (
-              <tr key={h._id} className="hover:bg-gray-50">
+            {portfolio?.mutualFunds.map((item) => (
+              <tr key={item.holding._id} className="hover:bg-gray-50">
                 <td className="py-4 pl-4 pr-3 text-sm sm:pl-6">
                   <div className="font-medium text-gray-900 max-w-xs truncate">
-                    {h.mutualFund?.schemeName}
+                    {item.mutualFund?.schemeName}
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
-                  {h.units.toFixed(3)}
+                  {item.holding.units.toFixed(3)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right text-gray-900">
-                  ₹{h.avgNav.toFixed(2)}
+                  ₹{item.holding.avgNav.toFixed(2)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right font-medium text-gray-900">
-                  ₹{h.totalInvested.toLocaleString()}
+                  ₹{item.holding.totalInvested.toLocaleString()}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
                   <button
                     onClick={() => {
-                      setEditingMF(h);
-                      setFormUnits(h.units.toString());
-                      setFormNav(h.avgNav.toString());
+                      setEditingMF(item.holding);
+                      setFormUnits(item.holding.units.toString());
+                      setFormNav(item.holding.avgNav.toString());
                     }}
                     className="text-blue-600 hover:text-blue-500 mr-3"
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteMF(h._id)}
+                    onClick={() => handleDeleteMF(item.holding._id)}
                     className="text-red-600 hover:text-red-500"
                   >
                     <TrashIcon className="h-4 w-4" />
