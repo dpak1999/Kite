@@ -42,12 +42,36 @@ export default function UserHoldingsPage() {
 
   // Form states
   const [formStock, setFormStock] = useState("");
+  const [formDate, setFormDate] = useState("");
   const [formQty, setFormQty] = useState("");
   const [formPrice, setFormPrice] = useState("");
   const [formMF, setFormMF] = useState("");
   const [formUnits, setFormUnits] = useState("");
   const [formNav, setFormNav] = useState("");
 
+  // Fetch historical data for the selected stock
+  const selectedStockHistoricalData = useQuery(
+    api.stocks.getHistoricalData,
+    formStock ? { stockId: formStock as Id<"stocks"> } : "skip",
+  );
+
+  // When date is selected, auto-fill price
+  const handleDateChange = (date: string) => {
+    setFormDate(date);
+    if (date && selectedStockHistoricalData) {
+      const point = selectedStockHistoricalData.find((p) => p.date === date);
+      if (point) {
+        setFormPrice(point.price.toFixed(2));
+      }
+    }
+  };
+
+  // Reset form when stock changes
+  const handleStockChange = (stockId: string) => {
+    setFormStock(stockId);
+    setFormDate("");
+    setFormPrice("");
+  };
   const handleAddStock = async () => {
     if (!formStock || !formQty || !formPrice) return;
     await addStockHolding({
@@ -369,8 +393,8 @@ export default function UserHoldingsPage() {
                 </label>
                 <select
                   value={formStock}
-                  onChange={(e) => setFormStock(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  onChange={(e) => handleStockChange(e.target.value)}
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Select a stock...</option>
                   {availableStocks?.map((s) => (
@@ -380,6 +404,29 @@ export default function UserHoldingsPage() {
                   ))}
                 </select>
               </div>
+              {formStock &&
+                selectedStockHistoricalData &&
+                selectedStockHistoricalData.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Purchase Date (optional)
+                    </label>
+                    <select
+                      value={formDate}
+                      onChange={(e) => handleDateChange(e.target.value)}
+                      className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">
+                        Select date to auto-fill price...
+                      </option>
+                      {selectedStockHistoricalData.map((point) => (
+                        <option key={point._id} value={point.date}>
+                          {point.date} - ₹{point.price.toFixed(2)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Quantity
@@ -388,7 +435,7 @@ export default function UserHoldingsPage() {
                   type="number"
                   value={formQty}
                   onChange={(e) => setFormQty(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Enter quantity"
                 />
               </div>
@@ -400,14 +447,14 @@ export default function UserHoldingsPage() {
                   type="number"
                   step="0.01"
                   value={formPrice}
-                  onChange={(e) => setFormPrice(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter price"
+                  readOnly
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Select date above to set price"
                 />
               </div>
               <button
                 onClick={handleAddStock}
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-500"
+                className="w-full bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-500"
               >
                 Add Holding
               </button>
@@ -434,7 +481,7 @@ export default function UserHoldingsPage() {
                 <select
                   value={formMF}
                   onChange={(e) => setFormMF(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Select a fund...</option>
                   {availableMFs?.map((mf) => (
@@ -453,7 +500,7 @@ export default function UserHoldingsPage() {
                   step="0.001"
                   value={formUnits}
                   onChange={(e) => setFormUnits(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Enter units"
                 />
               </div>
@@ -466,13 +513,13 @@ export default function UserHoldingsPage() {
                   step="0.01"
                   value={formNav}
                   onChange={(e) => setFormNav(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Enter NAV"
                 />
               </div>
               <button
                 onClick={handleAddMF}
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-500"
+                className="w-full bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-500"
               >
                 Add Holding
               </button>
@@ -502,7 +549,7 @@ export default function UserHoldingsPage() {
                   type="number"
                   value={formQty}
                   onChange={(e) => setFormQty(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -514,12 +561,12 @@ export default function UserHoldingsPage() {
                   step="0.01"
                   value={formPrice}
                   onChange={(e) => setFormPrice(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <button
                 onClick={handleUpdateStock}
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-500"
+                className="w-full bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-500"
               >
                 Update Holding
               </button>
@@ -548,7 +595,7 @@ export default function UserHoldingsPage() {
                   step="0.001"
                   value={formUnits}
                   onChange={(e) => setFormUnits(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -560,12 +607,12 @@ export default function UserHoldingsPage() {
                   step="0.01"
                   value={formNav}
                   onChange={(e) => setFormNav(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               <button
                 onClick={handleUpdateMF}
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-500"
+                className="w-full bg-blue-600 text-white py-2.5 rounded-md hover:bg-blue-500"
               >
                 Update Holding
               </button>
