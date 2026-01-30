@@ -8,12 +8,14 @@ import {
   Cog6ToothIcon,
   BookOpenIcon,
   UsersIcon,
+  WalletIcon,
 } from "@heroicons/react/24/outline";
 import DashboardClientWrapper from "./DashboardClientWrapper";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
   { name: "Users", href: "/dashboard/users", icon: UsersIcon },
+  { name: "Holdings", href: "/dashboard/holdings", icon: WalletIcon },
   { name: "Instruments", href: "/dashboard/instruments", icon: ChartBarIcon },
   { name: "Apps", href: "/dashboard/apps", icon: Squares2X2Icon },
   { name: "API Reference", href: "/dashboard/api", icon: BookOpenIcon },
