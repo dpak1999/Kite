@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { TrashIcon, ArrowPathIcon, ClockIcon } from "@heroicons/react/20/solid";
+import {
+  TrashIcon,
+  ArrowPathIcon,
+  ClockIcon,
+  ChartBarIcon,
+} from "@heroicons/react/20/solid";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
+import { Id } from "@packages/backend/convex/_generated/dataModel";
 import StockSearch from "./components/StockSearch";
 import MutualFundSearch from "./components/MutualFundSearch";
+import StockHistoryModal from "./components/StockHistoryModal";
 
 type TabType = "all" | "stocks" | "mutualFunds";
 
@@ -17,6 +24,11 @@ export default function InstrumentsPage() {
   const [fetchResult, setFetchResult] = useState<{
     total: number;
     success: number;
+  } | null>(null);
+  const [selectedStockForHistory, setSelectedStockForHistory] = useState<{
+    id: Id<"stocks">;
+    symbol: string;
+    name: string;
   } | null>(null);
 
   // Ensure we only render dynamic content after hydration
@@ -259,10 +271,26 @@ export default function InstrumentsPage() {
                       ? `${stock.percentChange >= 0 ? "+" : ""}${stock.percentChange.toFixed(2)}%`
                       : "-"}
                   </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
+                    {stock.hasHistoricalData && (
+                      <button
+                        onClick={() =>
+                          setSelectedStockForHistory({
+                            id: stock._id,
+                            symbol: stock.symbol,
+                            name: stock.companyName,
+                          })
+                        }
+                        className="text-blue-600 hover:text-blue-900"
+                        title="View Historical Data"
+                      >
+                        <ChartBarIcon className="h-5 w-5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteStock(stock._id)}
                       className="text-red-600 hover:text-red-900"
+                      title="Delete"
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
@@ -351,6 +379,16 @@ export default function InstrumentsPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Stock History Modal */}
+      {selectedStockForHistory && (
+        <StockHistoryModal
+          stockId={selectedStockForHistory.id}
+          stockSymbol={selectedStockForHistory.symbol}
+          stockName={selectedStockForHistory.name}
+          onClose={() => setSelectedStockForHistory(null)}
+        />
       )}
     </div>
   );

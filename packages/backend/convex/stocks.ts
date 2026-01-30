@@ -79,3 +79,15 @@ export const updatePrice = mutation({
     await ctx.db.patch(id, updates);
   },
 });
+
+// Get historical data for a stock
+export const getHistoricalData = query({
+  args: { stockId: v.id("stocks") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("stockHistoricalData")
+      .withIndex("by_stockId", (q) => q.eq("stockId", args.stockId))
+      .order("desc")
+      .collect();
+  },
+});

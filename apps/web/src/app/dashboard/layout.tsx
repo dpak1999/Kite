@@ -34,9 +34,9 @@ export default function DashboardLayout({
         <div className="flex items-center justify-center h-16 border-b border-gray-200 px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-[#ff5722] flex items-center justify-center text-white font-bold">
-              K
+              S
             </div>
-            <span className="text-xl font-bold text-gray-900">Kite</span>
+            <span className="text-xl font-bold text-gray-900">Stocker</span>
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto py-4 px-3">
