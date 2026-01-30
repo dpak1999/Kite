@@ -6,12 +6,14 @@ import {
   ChartBarIcon,
   Squares2X2Icon,
   Cog6ToothIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/outline";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
   { name: "Instruments", href: "/dashboard/instruments", icon: ChartBarIcon },
   { name: "Apps", href: "/dashboard/apps", icon: Squares2X2Icon },
+  { name: "API Reference", href: "/dashboard/api", icon: BookOpenIcon },
   { name: "Settings", href: "/dashboard/settings", icon: Cog6ToothIcon },
 ];
 
