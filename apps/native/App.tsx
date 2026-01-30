@@ -1,8 +1,10 @@
 import { View, StatusBar, Platform } from "react-native";
+import Toast from "react-native-toast-message";
 import { useFonts } from "expo-font";
 import { LogBox } from "react-native";
 import Navigation from "./src/navigation/Navigation";
 import ConvexClientProvider from "./ConvexClientProvider";
+import UserSync from "./src/components/UserSync";
 
 export default function App() {
   LogBox.ignoreLogs(["Warning: ..."]);
@@ -29,6 +31,7 @@ export default function App() {
 
   return (
     <ConvexClientProvider>
+      <UserSync />
       <View style={{ flex: 1 }}>
         <View style={{ height: STATUS_BAR_HEIGHT, backgroundColor: "#0D87E1" }}>
           <StatusBar
@@ -38,6 +41,7 @@ export default function App() {
           />
         </View>
         <Navigation />
+        <Toast />
       </View>
     </ConvexClientProvider>
   );
