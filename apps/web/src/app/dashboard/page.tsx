@@ -1,16 +1,15 @@
 "use client";
 
 import { useUser } from "@clerk/clerk-react";
-import { useQuery } from "convex/react";
-import { api } from "@packages/backend/convex/_generated/api";
 import PriceTable from "./components/PriceTable";
 import InstrumentCard from "./components/InstrumentCard";
-import RefreshButton from "./components/RefreshButton";
 
 export default function Dashboard() {
   const { user } = useUser();
-  const instruments = useQuery(api.instruments.list, {});
-  const prices = useQuery(api.prices.getAllPrices);
+
+  // TODO: Replace with actual data fetching once backend is restored
+  const instruments: any[] = [];
+  const prices: any[] = [];
 
   // Calculate Summary Stats
   const totalInstruments = instruments?.length || 0;
@@ -55,7 +54,7 @@ export default function Dashboard() {
               Last updated: {new Date(prices[0].updatedAt).toLocaleTimeString()}
             </span>
           )}
-          <RefreshButton />
+          {/* RefreshButton removed - backend not available */}
         </div>
       </div>
 
@@ -80,13 +79,6 @@ export default function Dashboard() {
           Live Markets
         </h3>
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          {/* We pass all prices. PriceTable handles mapping if we passed instruments too, but 
-                 current PriceTable implementation iterates prices. 
-                 It's better if PriceTable iterates instruments to ensure all are shown even if no price.
-                 But per spec "Price table with all instruments and current prices".
-                 The current PriceTable relies on prices array.
-                 Let's stick with passing filtered prices for now. 
-             */}
           <PriceTable prices={displayedPrices} />
         </div>
       </div>

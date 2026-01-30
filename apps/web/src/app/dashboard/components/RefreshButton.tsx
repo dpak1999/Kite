@@ -2,22 +2,15 @@
 
 import React, { useState } from "react";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { useAction } from "convex/react";
-import { api } from "@packages/backend/convex/_generated/api";
 
 export default function RefreshButton() {
-  const refreshAll = useAction(api.fetchMarketData.refreshAllPrices);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRefresh = async () => {
-    try {
-      setIsLoading(true);
-      await refreshAll();
-    } catch (error) {
-      console.error("Failed to refresh prices:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    // TODO: Implement when backend is available
+    setIsLoading(true);
+    console.log("Refresh prices - backend not connected");
+    setTimeout(() => setIsLoading(false), 1000);
   };
 
   return (

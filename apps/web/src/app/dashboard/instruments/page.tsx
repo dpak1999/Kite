@@ -3,51 +3,22 @@
 import React, { useState } from "react";
 import { PlusIcon, TrashIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@packages/backend/convex/_generated/api";
-import PriceTable, { PriceData } from "../components/PriceTable";
-import RefreshButton from "../components/RefreshButton";
 
 export default function InstrumentsPage() {
   const [filter, setFilter] = useState<"all" | "stock" | "etf" | "mutualfund">(
     "all",
   );
 
-  // Fetch instruments. Assuming list takes an optional type filter.
-  // Note: if the backend strictly requires 'type' or doesn't support 'all', I might need to adjust.
-  // Based on prompt: instruments.list({ type?: ... })
-  const queryArgs = filter === "all" ? {} : { type: filter };
-  const instruments = useQuery(api.instruments.list, queryArgs);
-  const prices = useQuery(api.prices.getAllPrices);
-  const removeInstrument = useMutation(api.instruments.remove);
-
-  // Merge price data with instruments for the table
-  // Ideally PriceTable takes PriceData.
-  // Let's filter the prices to only show those for the current instruments list
-  const instrumentIds = new Set(instruments?.map((i) => i._id));
-  const displayedPrices = prices?.filter((p) =>
-    instrumentIds.has(p.instrumentId),
-  );
-
-  // If we just have instruments but no prices yet, we should still show them?
-  // PriceTable expects PriceData. If price is missing for an instrument, we might need a fallback.
-  // However, PriceTable seems designed to take a list of prices.
-  // Let's stick to passing prices. If an instrument has no price, it won't show in the current PriceTable implementation.
-  // Alternatively, we could map instruments to a PriceData-like structure.
-
-  // Let's improve PriceTable usage.
-  // Actually the prompt says "Table showing all saved instruments... Last Price...".
-  // So we should map over instruments and find the matching price.
+  // TODO: Replace with actual data fetching once backend is restored
+  const instruments: any[] = [];
+  const prices: any[] = [];
 
   const handleDelete = async (id: any) => {
     if (confirm("Are you sure you want to remove this instrument?")) {
-      await removeInstrument({ id });
+      // TODO: Implement delete when backend is available
+      console.log("Delete instrument:", id);
     }
   };
-
-  if (!instruments) {
-    return <div className="p-8">Loading instruments...</div>;
-  }
 
   return (
     <div className="space-y-6">
@@ -58,7 +29,7 @@ export default function InstrumentsPage() {
           </h2>
         </div>
         <div className="mt-4 flex md:ml-4 md:mt-0 gap-3">
-          <RefreshButton />
+          {/* RefreshButton removed - backend not available */}
           <Link
             href="/dashboard/instruments/add"
             className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -169,7 +140,7 @@ export default function InstrumentsPage() {
             {instruments.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-10 text-center text-gray-500">
-                  No instruments found.
+                  No instruments found. Backend not connected.
                 </td>
               </tr>
             )}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "MF005335",
+    "schemeName": "Parag Parikh Flexi Cap Fund",
+    "isin": "INF879O01019",
+    "schemeType": "Open Ended Investment Company",
+    "categoryId": "MFCAT003"
+  },
+  {
+    "id": "MF006240",
+    "schemeName": "Parag Parikh ELSS Tax Saver Fund",
+    "isin": "INF879O01092",
+    "schemeType": "Open Ended Investment Company",
+    "categoryId": "MFCAT003"
+  },
+  {
+    "id": "MF008539",
+    "schemeName": "Parag Parikh Liquid Fund",
+    "isin": "INF879O01035",
+    "schemeType": "Open Ended Investment Company",
+    "categoryId": "MFCAT004"
+  },
+  {
+    "id": "MF008127",
+    "schemeName": "Parag Parikh Conservative Hybrid Fund",
+    "isin": "INF879O01209",
+    "schemeType": "Open Ended Investment Company",
+    "categoryId": "MFCAT002"
+  },
+  {
+    "id": "MF016403",
+    "schemeName": "Parag Parikh Dynamic Asset Allocation Fund",
+    "isin": "INF879O01233",
+    "schemeType": "Open Ended Investment Company",
+    "categoryId": "MFCAT002"
+  },
+  {
+    "id": "MF016119",
+    "schemeName": "Parag Parikh Arbitrage Fund",
+    "isin": "INF879O01217",
+    "schemeType": "Open Ended Investment Company",
+    "categoryId": "MFCAT007"
+  }
+]

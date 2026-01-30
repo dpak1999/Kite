@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/20/solid";
-import { useAction, useMutation } from "convex/react";
-import { api } from "@packages/backend/convex/_generated/api";
 
 export default function SearchInstruments() {
   const [query, setQuery] = useState("");
@@ -11,9 +9,6 @@ export default function SearchInstruments() {
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-
-  const searchInstruments = useAction(api.fetchMarketData.searchInstruments);
-  const addInstruments = useMutation(api.instruments.addFromSearch);
 
   // Manual debounce
   useEffect(() => {
@@ -36,8 +31,12 @@ export default function SearchInstruments() {
 
       setIsSearching(true);
       try {
-        const data = await searchInstruments({ query: debouncedQuery });
-        setResults(data || []);
+        // TODO: Implement when backend is available
+        console.log(
+          "Search instruments - backend not connected:",
+          debouncedQuery,
+        );
+        setResults([]);
       } catch (error) {
         console.error("Search failed:", error);
       } finally {
@@ -46,7 +45,7 @@ export default function SearchInstruments() {
     }
 
     performSearch();
-  }, [debouncedQuery, searchInstruments]);
+  }, [debouncedQuery]);
 
   const toggleSelection = (symbol: string) => {
     const newSelected = new Set(selected);
@@ -63,11 +62,12 @@ export default function SearchInstruments() {
     if (instrumentsToAdd.length === 0) return;
 
     try {
-      await addInstruments({ instruments: instrumentsToAdd });
+      // TODO: Implement when backend is available
+      console.log("Add instruments - backend not connected:", instrumentsToAdd);
       setQuery("");
       setResults([]);
       setSelected(new Set());
-      alert(`Added ${instrumentsToAdd.length} instruments`);
+      alert("Backend not connected");
     } catch (error) {
       console.error("Failed to add instruments:", error);
       alert("Failed to add instruments");
@@ -86,7 +86,7 @@ export default function SearchInstruments() {
         <input
           type="text"
           className="block w-full rounded-md border-0 py-3 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-          placeholder="Search for stocks, ETFs (e.g. AAPL, Reliance)"
+          placeholder="Search for stocks, ETFs (e.g. AAPL, Reliance) - Backend not connected"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

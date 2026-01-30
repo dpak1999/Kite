@@ -3,11 +3,10 @@
 import React from "react";
 import { ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { Id } from "@packages/backend/convex/_generated/dataModel";
 
 export type PriceData = {
-  _id: Id<"prices">;
-  instrumentId: Id<"instruments">;
+  _id: string;
+  instrumentId: string;
   symbol: string;
   price: number;
   change?: number;

@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery, useAction } from "convex/react";
-import { api } from "@packages/backend/convex/_generated/api";
-import { ArrowLeftIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 export default function InstrumentDetailPage() {
@@ -12,50 +10,23 @@ export default function InstrumentDetailPage() {
   const symbol = params.symbol as string;
 
   const [historyRange, setHistoryRange] = useState("1mo");
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // We need to find the instrument ID first?
-  // Ideally backend provides getBySymbol. If not, we list all and find.
-  // Let's assume we can get prices by symbol or list instruments.
-  // Prompt says: prices.getHistoryBySymbol({ symbol: string, limit?: number })
-
-  const instruments = useQuery(api.instruments.list, {});
-  const prices = useQuery(api.prices.getAllPrices);
-  const history = useQuery(api.prices.getHistoryBySymbol, {
-    symbol,
-    limit: 100,
-  });
-  const refreshPrice = useAction(api.fetchMarketData.refreshPrice);
-  const fetchHistory = useAction(api.fetchMarketData.fetchHistory);
-
-  const instrument = instruments?.find((i) => i.symbol === symbol);
-  const currentPrice = prices?.find((p) => p.symbol === symbol);
+  // TODO: Replace with actual data fetching once backend is restored
+  const instrument = { name: symbol, type: "stock", exchange: "NSE" };
+  const currentPrice = null;
+  const history: any[] = [];
 
   const handleRefreshPrice = async () => {
-    try {
-      await refreshPrice({ symbol });
-    } catch (e) {
-      console.error(e);
-    }
+    // TODO: Implement when backend is available
+    console.log("Refresh price for:", symbol);
   };
 
   const handleFetchHistory = async () => {
-    try {
-      setIsLoadingHistory(true);
-      await fetchHistory({ symbol, range: historyRange as any });
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoadingHistory(false);
-    }
+    // TODO: Implement when backend is available
+    console.log("Fetch history for:", symbol, "range:", historyRange);
   };
 
-  if (!instrument && !instruments)
-    return <div className="p-8">Loading instrument...</div>;
-  if (!instrument && instruments)
-    return <div className="p-8">Instrument not found</div>;
-
-  const isPositive = (currentPrice?.change || 0) >= 0;
+  const isPositive = (currentPrice as any)?.change >= 0;
 
   return (
     <div className="space-y-6">
@@ -87,26 +58,9 @@ export default function InstrumentDetailPage() {
           </div>
 
           <div className="text-right">
-            {currentPrice ? (
-              <>
-                <div className="text-4xl font-bold text-gray-900">
-                  {currentPrice.price.toFixed(2)}
-                </div>
-                <div
-                  className={`text-lg font-medium ${isPositive ? "text-green-600" : "text-red-500"}`}
-                >
-                  {isPositive ? "+" : ""}
-                  {currentPrice.change?.toFixed(2)} (
-                  {currentPrice.changePercent?.toFixed(2)}%)
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Updated:{" "}
-                  {new Date(currentPrice.updatedAt).toLocaleTimeString()}
-                </div>
-              </>
-            ) : (
-              <span className="text-gray-500">Price unavailable</span>
-            )}
+            <span className="text-gray-500">
+              Price unavailable - Backend not connected
+            </span>
           </div>
         </div>
       </div>
@@ -131,10 +85,9 @@ export default function InstrumentDetailPage() {
           </select>
           <button
             onClick={handleFetchHistory}
-            disabled={isLoadingHistory}
             className="inline-flex items-center rounded bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:opacity-70"
           >
-            {isLoadingHistory ? "Fetching..." : "Fetch History"}
+            Fetch History
           </button>
         </div>
       </div>
@@ -213,7 +166,7 @@ export default function InstrumentDetailPage() {
             {(!history || history.length === 0) && (
               <tr>
                 <td colSpan={6} className="py-10 text-center text-gray-500">
-                  No history data available. Click "Fetch History" to load data.
+                  No history data available. Backend not connected.
                 </td>
               </tr>
             )}
