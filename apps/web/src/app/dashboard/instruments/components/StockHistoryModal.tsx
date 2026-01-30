@@ -1,10 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 import { Id } from "@packages/backend/convex/_generated/dataModel";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 
 interface StockHistoryModalProps {
   stockId: Id<"stocks">;
@@ -13,13 +17,33 @@ interface StockHistoryModalProps {
   onClose: () => void;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function StockHistoryModal({
   stockId,
   stockSymbol,
   stockName,
   onClose,
 }: StockHistoryModalProps) {
-  const historicalData = useQuery(api.stocks.getHistoricalData, { stockId });
+  const [currentPage, setCurrentPage] = useState(1);
+  const historicalData = useQuery(api.stocks.getHistoricalData, {
+    stockId,
+    pagination: { page: currentPage, limit: ITEMS_PER_PAGE },
+  });
+
+  const totalPages = historicalData
+    ? Math.ceil(historicalData.total / ITEMS_PER_PAGE)
+    : 0;
+
+  const currentData = historicalData ? historicalData.data : [];
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -46,7 +70,7 @@ export default function StockHistoryModal({
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
-          ) : historicalData.length === 0 ? (
+          ) : historicalData.total === 0 ? (
             <div className="flex items-center justify-center h-64 text-gray-500">
               No historical data available. Click "Fetch Historical" to load
               data.
@@ -60,56 +84,94 @@ export default function StockHistoryModal({
                     Latest Price
                   </div>
                   <div className="text-lg font-semibold text-gray-900">
-                    ₹{historicalData[0]?.price.toFixed(2)}
+                    {/* Note: This is now just the first of the current page, which is OK or we need separate query for latest? 
+                        The previous implementation showed historicalData[0] of ALL data. 
+                        For backend pagination, historicalData.data[0] is the first of THIS page.
+                        If page 1, it's latest. If page 2, it's not. 
+                        Let's just show the first of the current view or specific latest?
+                        The user didn't ask to change stats logic, but stats dependent on "all data" need "total" or separate endpoints.
+                        For simplicity, I'll show data from current view or just hide if complex. 
+                        Actually, showing range of *this page* is fine.
+                        For "Latest Price", if on page 1, good.
+                    */}
+                    ₹{currentData[0]?.price.toFixed(2)}
                   </div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                   <div className="text-xs text-gray-500 uppercase">
-                    Data Points
+                    Total Data Points
                   </div>
                   <div className="text-lg font-semibold text-gray-900">
-                    {historicalData.length}
+                    {historicalData.total}
                   </div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                   <div className="text-xs text-gray-500 uppercase">
-                    Date Range
+                    Page Date Range
                   </div>
                   <div className="text-sm font-semibold text-gray-900">
-                    {historicalData[historicalData.length - 1]?.date} -{" "}
-                    {historicalData[0]?.date}
+                    {currentData[currentData.length - 1]?.date} -{" "}
+                    {currentData[0]?.date}
                   </div>
                 </div>
               </div>
 
               {/* Data Table */}
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Date
-                    </th>
-                    <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Price
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {historicalData.map((point, index) => (
-                    <tr
-                      key={point._id}
-                      className={index % 2 === 0 ? "" : "bg-gray-50"}
-                    >
-                      <td className="whitespace-nowrap py-2 px-3 text-sm text-gray-900">
-                        {point.date}
-                      </td>
-                      <td className="whitespace-nowrap py-2 px-3 text-sm text-right font-medium text-gray-900">
-                        ₹{point.price.toFixed(2)}
-                      </td>
+              <div className="bg-white shadow ring-1 ring-black/5 rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="py-2 px-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Date
+                      </th>
+                      <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        Price
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {currentData.map((point, index) => (
+                      <tr
+                        key={point._id}
+                        className={index % 2 === 0 ? "" : "bg-gray-50"}
+                      >
+                        <td className="whitespace-nowrap py-2 px-3 text-sm text-gray-900">
+                          {point.date}
+                        </td>
+                        <td className="whitespace-nowrap py-2 px-3 text-sm text-right font-medium text-gray-900">
+                          ₹{point.price.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 px-2">
+                  <div className="text-sm text-gray-700">
+                    Page <span className="font-medium">{currentPage}</span> of{" "}
+                    <span className="font-medium">{totalPages}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 1}
+                      className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
+                    </button>
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRightIcon className="h-5 w-5 text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

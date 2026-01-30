@@ -65,8 +65,10 @@ export default function UserHoldingsPage() {
   // When date is selected for stock, auto-fill price
   const handleDateChange = (date: string) => {
     setFormDate(date);
-    if (date && selectedStockHistoricalData) {
-      const point = selectedStockHistoricalData.find((p) => p.date === date);
+    if (date && selectedStockHistoricalData?.data) {
+      const point = selectedStockHistoricalData.data.find(
+        (p) => p.date === date,
+      );
       if (point) {
         setFormPrice(point.price.toFixed(2));
       }
@@ -76,8 +78,8 @@ export default function UserHoldingsPage() {
   // When date is selected for MF, auto-fill NAV
   const handleMFDateChange = (date: string) => {
     setFormMFDate(date);
-    if (date && selectedMFHistoricalData) {
-      const point = selectedMFHistoricalData.find((p) => p.date === date);
+    if (date && selectedMFHistoricalData?.data) {
+      const point = selectedMFHistoricalData.data.find((p) => p.date === date);
       if (point) {
         setFormNav(point.nav.toFixed(4));
       }
@@ -431,7 +433,7 @@ export default function UserHoldingsPage() {
               </div>
               {formStock &&
                 selectedStockHistoricalData &&
-                selectedStockHistoricalData.length > 0 && (
+                selectedStockHistoricalData.total > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Purchase Date (optional)
@@ -444,7 +446,7 @@ export default function UserHoldingsPage() {
                       <option value="">
                         Select date to auto-fill price...
                       </option>
-                      {selectedStockHistoricalData.map((point) => (
+                      {selectedStockHistoricalData.data.map((point) => (
                         <option key={point._id} value={point.date}>
                           {point.date} - ₹{point.price.toFixed(2)}
                         </option>
@@ -518,7 +520,7 @@ export default function UserHoldingsPage() {
               </div>
               {formMF &&
                 selectedMFHistoricalData &&
-                selectedMFHistoricalData.length > 0 && (
+                selectedMFHistoricalData.total > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Purchase Date (optional)
@@ -529,7 +531,7 @@ export default function UserHoldingsPage() {
                       className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
                       <option value="">Select date to auto-fill NAV...</option>
-                      {selectedMFHistoricalData.map((point) => (
+                      {selectedMFHistoricalData.data.map((point) => (
                         <option key={point._id} value={point.date}>
                           {point.date} - ₹{point.nav.toFixed(4)}
                         </option>

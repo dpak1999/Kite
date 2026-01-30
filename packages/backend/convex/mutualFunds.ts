@@ -92,14 +92,38 @@ export const updateNav = mutation({
   },
 });
 
-// Get historical data for a mutual fund
+// Get historical data for a mutual fund with pagination
 export const getHistoricalData = query({
-  args: { mutualFundId: v.id("mutualFunds") },
+  args: {
+    mutualFundId: v.id("mutualFunds"),
+    pagination: v.optional(
+      v.object({
+        page: v.number(),
+        limit: v.number(),
+      })
+    ),
+  },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const allData = await ctx.db
       .query("mutualFundHistoricalData")
       .withIndex("by_mutualFundId", (q) => q.eq("mutualFundId", args.mutualFundId))
       .order("desc")
       .collect();
+
+    if (!args.pagination) {
+      return {
+        data: allData,
+        total: allData.length,
+      };
+    }
+
+    const { page, limit } = args.pagination;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return {
+      data: allData.slice(startIndex, endIndex),
+      total: allData.length,
+    };
   },
 });
