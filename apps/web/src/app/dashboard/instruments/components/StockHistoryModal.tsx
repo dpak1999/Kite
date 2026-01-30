@@ -23,12 +23,12 @@ export default function StockHistoryModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
-              {stockSymbol} - Historical Data
+              {stockSymbol} - Historical Prices
             </h3>
             <p className="text-sm text-gray-500">{stockName}</p>
           </div>
@@ -54,7 +54,7 @@ export default function StockHistoryModal({
           ) : (
             <>
               {/* Summary Stats */}
-              <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                   <div className="text-xs text-gray-500 uppercase">
                     Latest Price
@@ -72,15 +72,12 @@ export default function StockHistoryModal({
                   </div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="text-xs text-gray-500 uppercase">50 DMA</div>
-                  <div className="text-lg font-semibold text-gray-900">
-                    ₹{historicalData[0]?.dma50?.toFixed(2) || "-"}
+                  <div className="text-xs text-gray-500 uppercase">
+                    Date Range
                   </div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <div className="text-xs text-gray-500 uppercase">200 DMA</div>
-                  <div className="text-lg font-semibold text-gray-900">
-                    ₹{historicalData[0]?.dma200?.toFixed(2) || "-"}
+                  <div className="text-sm font-semibold text-gray-900">
+                    {historicalData[historicalData.length - 1]?.date} -{" "}
+                    {historicalData[0]?.date}
                   </div>
                 </div>
               </div>
@@ -95,15 +92,6 @@ export default function StockHistoryModal({
                     <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 uppercase">
                       Price
                     </th>
-                    <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      50 DMA
-                    </th>
-                    <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      200 DMA
-                    </th>
-                    <th className="py-2 px-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Volume
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
@@ -117,15 +105,6 @@ export default function StockHistoryModal({
                       </td>
                       <td className="whitespace-nowrap py-2 px-3 text-sm text-right font-medium text-gray-900">
                         ₹{point.price.toFixed(2)}
-                      </td>
-                      <td className="whitespace-nowrap py-2 px-3 text-sm text-right text-gray-500">
-                        {point.dma50 ? `₹${point.dma50.toFixed(2)}` : "-"}
-                      </td>
-                      <td className="whitespace-nowrap py-2 px-3 text-sm text-right text-gray-500">
-                        {point.dma200 ? `₹${point.dma200.toFixed(2)}` : "-"}
-                      </td>
-                      <td className="whitespace-nowrap py-2 px-3 text-sm text-right text-gray-500">
-                        {point.volume ? point.volume.toLocaleString() : "-"}
                       </td>
                     </tr>
                   ))}

@@ -152,47 +152,33 @@ export const fetchStockHistoricalData = action({
       const data = await fetchFromApi("/historical_data", {
         stock_name: args.stockName,
         period: "5yr",
-        filter: "default",
+        filter: "price",
       });
 
       if (!data || !data.datasets) {
         return { success: false, error: "No data returned" };
       }
 
-      // Find the price, DMA50, DMA200, and Volume datasets
+      // Find the price dataset
       const priceDataset = data.datasets.find((d: any) => d.metric === "Price");
-      const dma50Dataset = data.datasets.find((d: any) => d.metric === "DMA50");
-      const dma200Dataset = data.datasets.find((d: any) => d.metric === "DMA200");
-      const volumeDataset = data.datasets.find((d: any) => d.metric === "Volume");
 
       if (!priceDataset?.values) {
         return { success: false, error: "No price data found" };
       }
 
-      // Build data points array
+      // Build data points array (only price data with filter=price)
       const dataPoints: {
         date: string;
         price: number;
-        dma50?: number;
-        dma200?: number;
-        volume?: number;
       }[] = [];
 
       for (const [date, priceStr] of priceDataset.values) {
         const price = parseFloat(priceStr);
         if (isNaN(price)) continue;
 
-        // Find corresponding DMA50, DMA200, Volume for this date
-        const dma50Entry = dma50Dataset?.values?.find((v: any) => v[0] === date);
-        const dma200Entry = dma200Dataset?.values?.find((v: any) => v[0] === date);
-        const volumeEntry = volumeDataset?.values?.find((v: any) => v[0] === date);
-
         dataPoints.push({
           date,
           price,
-          dma50: dma50Entry ? parseFloat(dma50Entry[1]) : undefined,
-          dma200: dma200Entry ? parseFloat(dma200Entry[1]) : undefined,
-          volume: volumeEntry ? (typeof volumeEntry[1] === "number" ? volumeEntry[1] : undefined) : undefined,
         });
       }
 
@@ -235,11 +221,11 @@ export const fetchAllHistoricalData = action({
 
     for (const stock of stocks) {
       try {
-        // Fetch historical data for this stock
+        // Fetch historical data for this stock (price only)
         const data = await fetchFromApi("/historical_data", {
           stock_name: stock.companyName,
           period: "5yr",
-          filter: "default",
+          filter: "price",
         });
 
         if (!data || !data.datasets) {
@@ -248,9 +234,6 @@ export const fetchAllHistoricalData = action({
         }
 
         const priceDataset = data.datasets.find((d: any) => d.metric === "Price");
-        const dma50Dataset = data.datasets.find((d: any) => d.metric === "DMA50");
-        const dma200Dataset = data.datasets.find((d: any) => d.metric === "DMA200");
-        const volumeDataset = data.datasets.find((d: any) => d.metric === "Volume");
 
         if (!priceDataset?.values) {
           results.push({ symbol: stock.symbol, success: false, error: "No price data" });
@@ -260,25 +243,15 @@ export const fetchAllHistoricalData = action({
         const dataPoints: {
           date: string;
           price: number;
-          dma50?: number;
-          dma200?: number;
-          volume?: number;
         }[] = [];
 
         for (const [date, priceStr] of priceDataset.values) {
           const price = parseFloat(priceStr);
           if (isNaN(price)) continue;
 
-          const dma50Entry = dma50Dataset?.values?.find((v: any) => v[0] === date);
-          const dma200Entry = dma200Dataset?.values?.find((v: any) => v[0] === date);
-          const volumeEntry = volumeDataset?.values?.find((v: any) => v[0] === date);
-
           dataPoints.push({
             date,
             price,
-            dma50: dma50Entry ? parseFloat(dma50Entry[1]) : undefined,
-            dma200: dma200Entry ? parseFloat(dma200Entry[1]) : undefined,
-            volume: volumeEntry ? (typeof volumeEntry[1] === "number" ? volumeEntry[1] : undefined) : undefined,
           });
         }
 

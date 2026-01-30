@@ -59,10 +59,21 @@ export const add = mutation({
   },
 });
 
-// Remove a stock
+// Remove a stock and its historical data
 export const remove = mutation({
   args: { id: v.id("stocks") },
   handler: async (ctx, args) => {
+    // Delete all historical data for this stock first
+    const historicalData = await ctx.db
+      .query("stockHistoricalData")
+      .withIndex("by_stockId", (q) => q.eq("stockId", args.id))
+      .collect();
+
+    for (const record of historicalData) {
+      await ctx.db.delete(record._id);
+    }
+
+    // Then delete the stock itself
     await ctx.db.delete(args.id);
   },
 });
