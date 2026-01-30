@@ -50,7 +50,7 @@ export const listStockHoldings = query({
   },
 });
 
-// Get user's complete portfolio
+// Get user's complete portfolio with P&L calculations
 export const getUserPortfolio = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
@@ -64,25 +64,91 @@ export const getUserPortfolio = query({
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .collect();
 
-    // Enrich stock holdings
+    // Enrich stock holdings with P&L calculations
     const enrichedStocks = await Promise.all(
       stockHoldings.map(async (h) => {
         const stock = await ctx.db.get(h.stockId);
-        return { ...h, stock };
+
+        // Calculate current value and P&L
+        const currentPrice = stock?.currentPrice || 0;
+        const currentValue = h.quantity * currentPrice;
+        const gainLoss = currentValue - h.totalInvested;
+        const gainLossPercent = h.totalInvested > 0
+          ? (gainLoss / h.totalInvested) * 100
+          : 0;
+
+        return {
+          holding: h,
+          stock,
+          currentValue,
+          gainLoss,
+          gainLossPercent,
+        };
       })
     );
 
-    // Enrich MF holdings
+    // Enrich MF holdings with P&L calculations
     const enrichedMFs = await Promise.all(
       mfHoldings.map(async (h) => {
         const mf = await ctx.db.get(h.mutualFundId);
-        return { ...h, mutualFund: mf };
+
+        // Calculate current value and P&L
+        const currentNav = mf?.currentNav || 0;
+        const currentValue = h.units * currentNav;
+        const gainLoss = currentValue - h.totalInvested;
+        const gainLossPercent = h.totalInvested > 0
+          ? (gainLoss / h.totalInvested) * 100
+          : 0;
+
+        return {
+          holding: h,
+          mutualFund: mf,
+          currentValue,
+          gainLoss,
+          gainLossPercent,
+        };
       })
     );
+
+    // Calculate combined portfolio statistics
+    const totalStockInvested = stockHoldings.reduce(
+      (sum, h) => sum + h.totalInvested,
+      0
+    );
+    const totalMFInvested = mfHoldings.reduce(
+      (sum, h) => sum + h.totalInvested,
+      0
+    );
+    const totalInvested = totalStockInvested + totalMFInvested;
+
+    const totalStockCurrentValue = enrichedStocks.reduce(
+      (sum, s) => sum + s.currentValue,
+      0
+    );
+    const totalMFCurrentValue = enrichedMFs.reduce(
+      (sum, m) => sum + m.currentValue,
+      0
+    );
+    const totalCurrentValue = totalStockCurrentValue + totalMFCurrentValue;
+
+    const totalGainLoss = totalCurrentValue - totalInvested;
+    const totalGainLossPercent = totalInvested > 0
+      ? (totalGainLoss / totalInvested) * 100
+      : 0;
 
     return {
       stocks: enrichedStocks,
       mutualFunds: enrichedMFs,
+      combined: {
+        totalInvested,
+        totalCurrentValue,
+        totalGainLoss,
+        totalGainLossPercent,
+        stocksInvested: totalStockInvested,
+        stocksCurrentValue: totalStockCurrentValue,
+        mfsInvested: totalMFInvested,
+        mfsCurrentValue: totalMFCurrentValue,
+      },
     };
   },
 });
@@ -264,6 +330,116 @@ export const removeMutualFundHolding = mutation({
   args: { id: v.id("userMutualFundHoldings") },
   handler: async (ctx, args) => {
     return await ctx.db.delete(args.id);
+  },
+});
+
+// Get a single stock holding with P&L
+export const getStockHoldingById = query({
+  args: { holdingId: v.id("userStockHoldings") },
+  handler: async (ctx, args) => {
+    const holding = await ctx.db.get(args.holdingId);
+    if (!holding) {
+      return null;
+    }
+
+    const stock = await ctx.db.get(holding.stockId);
+    const currentPrice = stock?.currentPrice || 0;
+    const currentValue = holding.quantity * currentPrice;
+    const gainLoss = currentValue - holding.totalInvested;
+    const gainLossPercent = holding.totalInvested > 0
+      ? (gainLoss / holding.totalInvested) * 100
+      : 0;
+
+    return {
+      holding,
+      stock,
+      currentValue,
+      gainLoss,
+      gainLossPercent,
+    };
+  },
+});
+
+// Get a single MF holding with P&L
+export const getMutualFundHoldingById = query({
+  args: { holdingId: v.id("userMutualFundHoldings") },
+  handler: async (ctx, args) => {
+    const holding = await ctx.db.get(args.holdingId);
+    if (!holding) {
+      return null;
+    }
+
+    const mf = await ctx.db.get(holding.mutualFundId);
+    const currentNav = mf?.currentNav || 0;
+    const currentValue = holding.units * currentNav;
+    const gainLoss = currentValue - holding.totalInvested;
+    const gainLossPercent = holding.totalInvested > 0
+      ? (gainLoss / holding.totalInvested) * 100
+      : 0;
+
+    return {
+      holding,
+      mutualFund: mf,
+      currentValue,
+      gainLoss,
+      gainLossPercent,
+    };
+  },
+});
+
+// Get portfolio summary (just the stats, no holdings list)
+export const getPortfolioSummary = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const stockHoldings = await ctx.db
+      .query("userStockHoldings")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const mfHoldings = await ctx.db
+      .query("userMutualFundHoldings")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // Calculate stock totals
+    let totalStockInvested = 0;
+    let totalStockCurrentValue = 0;
+    for (const h of stockHoldings) {
+      const stock = await ctx.db.get(h.stockId);
+      const currentPrice = stock?.currentPrice || 0;
+      totalStockInvested += h.totalInvested;
+      totalStockCurrentValue += h.quantity * currentPrice;
+    }
+
+    // Calculate MF totals
+    let totalMFInvested = 0;
+    let totalMFCurrentValue = 0;
+    for (const h of mfHoldings) {
+      const mf = await ctx.db.get(h.mutualFundId);
+      const currentNav = mf?.currentNav || 0;
+      totalMFInvested += h.totalInvested;
+      totalMFCurrentValue += h.units * currentNav;
+    }
+
+    const totalInvested = totalStockInvested + totalMFInvested;
+    const totalCurrentValue = totalStockCurrentValue + totalMFCurrentValue;
+    const totalGainLoss = totalCurrentValue - totalInvested;
+    const totalGainLossPercent = totalInvested > 0
+      ? (totalGainLoss / totalInvested) * 100
+      : 0;
+
+    return {
+      totalInvested,
+      totalCurrentValue,
+      totalGainLoss,
+      totalGainLossPercent,
+      stocksCount: stockHoldings.length,
+      stocksInvested: totalStockInvested,
+      stocksCurrentValue: totalStockCurrentValue,
+      mfsCount: mfHoldings.length,
+      mfsInvested: totalMFInvested,
+      mfsCurrentValue: totalMFCurrentValue,
+    };
   },
 });
 

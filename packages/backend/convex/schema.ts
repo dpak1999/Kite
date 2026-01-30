@@ -99,4 +99,67 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_mutualFundId", ["mutualFundId"])
     .index("by_userId_mutualFundId", ["userId", "mutualFundId"]),
+
+  // Wallets - User's virtual account balance for trading
+  wallets: defineTable({
+    userId: v.id("users"),
+    balance: v.number(), // Current balance in rupees
+    totalAdded: v.number(), // Lifetime added amount
+    totalSpent: v.number(), // Lifetime spent amount
+    totalEarned: v.number(), // Lifetime earned from sells
+    lastUpdatedAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
+  // Add Money Requests - User requests for adding money to wallet
+  addMoneyRequests: defineTable({
+    userId: v.id("users"),
+    amount: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+    requestedAt: v.number(),
+    approvedAt: v.optional(v.number()),
+    approvedBy: v.optional(v.id("users")),
+    rejectionReason: v.optional(v.string()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_requestedAt", ["requestedAt"]),
+
+  // Transactions - Complete audit trail of all money movements
+  transactions: defineTable({
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("add_money"),
+      v.literal("buy_stock"),
+      v.literal("sell_stock"),
+      v.literal("buy_mf"),
+      v.literal("sell_mf")
+    ),
+    amount: v.number(),
+    description: v.string(),
+    relatedAssetId: v.optional(v.string()),
+    relatedAssetName: v.optional(v.string()),
+    quantity: v.optional(v.number()),
+    pricePerUnit: v.optional(v.number()),
+    balanceBefore: v.number(),
+    balanceAfter: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_type", ["type"])
+    .index("by_userId_createdAt", ["userId", "createdAt"]),
+
+  // Watchlist - User's tracked instruments
+  watchlist: defineTable({
+    userId: v.id("users"),
+    instrumentType: v.union(v.literal("stock"), v.literal("mutualFund")),
+    instrumentId: v.string(),
+    addedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_instrumentId", ["userId", "instrumentId"]),
 });
