@@ -7,10 +7,13 @@ import {
   Squares2X2Icon,
   Cog6ToothIcon,
   BookOpenIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
+import DashboardClientWrapper from "./DashboardClientWrapper";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+  { name: "Users", href: "/dashboard/users", icon: UsersIcon },
   { name: "Instruments", href: "/dashboard/instruments", icon: ChartBarIcon },
   { name: "Apps", href: "/dashboard/apps", icon: Squares2X2Icon },
   { name: "API Reference", href: "/dashboard/api", icon: BookOpenIcon },
@@ -60,7 +63,9 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="md:pl-64 flex flex-col min-h-screen">
-        <main className="flex-1 py-6 px-4 sm:px-6 lg:px-8">{children}</main>
+        <main className="flex-1 py-6 px-4 sm:px-6 lg:px-8">
+          <DashboardClientWrapper>{children}</DashboardClientWrapper>
+        </main>
       </div>
     </div>
   );

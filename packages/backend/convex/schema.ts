@@ -2,6 +2,20 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // Users table - synced from Clerk
+  users: defineTable({
+    clerkId: v.string(),
+    email: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    lastLoginAt: v.optional(v.number()),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_email", ["email"])
+    .index("by_createdAt", ["createdAt"]),
+
   // Stocks table - saved stock instruments
   stocks: defineTable({
     symbol: v.string(),
