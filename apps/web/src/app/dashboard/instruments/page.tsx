@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TrashIcon } from "@heroicons/react/20/solid";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 import StockSearch from "./components/StockSearch";
 import MutualFundSearch from "./components/MutualFundSearch";
 
-type TabType = "stocks" | "mutualFunds";
+type TabType = "all" | "stocks" | "mutualFunds";
 
 export default function InstrumentsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("stocks");
+  const [activeTab, setActiveTab] = useState<TabType>("all");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure we only render dynamic content after hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Queries
   const stocks = useQuery(api.stocks.list);
@@ -35,14 +41,19 @@ export default function InstrumentsPage() {
     }
   };
 
+  // Use 0 for counts during SSR to prevent hydration mismatch
+  const stockCount = mounted ? stocks?.length || 0 : 0;
+  const mfCount = mounted ? mutualFunds?.length || 0 : 0;
+  const totalCount = stockCount + mfCount;
+
   const tabs = [
-    { id: "stocks" as TabType, name: "Stocks", count: stocks?.length || 0 },
-    {
-      id: "mutualFunds" as TabType,
-      name: "Mutual Funds",
-      count: mutualFunds?.length || 0,
-    },
+    { id: "all" as TabType, name: "All", count: totalCount },
+    { id: "stocks" as TabType, name: "Stocks", count: stockCount },
+    { id: "mutualFunds" as TabType, name: "Mutual Funds", count: mfCount },
   ];
+
+  const showStocks = activeTab === "all" || activeTab === "stocks";
+  const showMutualFunds = activeTab === "all" || activeTab === "mutualFunds";
 
   return (
     <div className="space-y-6">
@@ -90,33 +101,62 @@ export default function InstrumentsPage() {
         </nav>
       </div>
 
-      {/* Search Section */}
-      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">
-          {activeTab === "stocks" ? "Search Stocks" : "Search Mutual Funds"}
-        </h3>
-        {activeTab === "stocks" ? (
+      {/* Search Section - Show both when on All tab */}
+      {activeTab === "all" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Search Stocks
+            </h3>
+            <StockSearch
+              key={`stock-${refreshKey}`}
+              onStockAdded={handleRefresh}
+            />
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Search Mutual Funds
+            </h3>
+            <MutualFundSearch
+              key={`mf-${refreshKey}`}
+              onFundAdded={handleRefresh}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeTab === "stocks" && (
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">
+            Search Stocks
+          </h3>
           <StockSearch
             key={`stock-${refreshKey}`}
             onStockAdded={handleRefresh}
           />
-        ) : (
+        </div>
+      )}
+
+      {activeTab === "mutualFunds" && (
+        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">
+            Search Mutual Funds
+          </h3>
           <MutualFundSearch
             key={`mf-${refreshKey}`}
             onFundAdded={handleRefresh}
           />
-        )}
-      </div>
-
-      {/* Saved Items List */}
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-base font-semibold text-gray-900">
-            {activeTab === "stocks" ? "Your Stocks" : "Your Mutual Funds"}
-          </h3>
         </div>
+      )}
 
-        {activeTab === "stocks" ? (
+      {/* Stocks Table */}
+      {showStocks && (
+        <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <h3 className="text-base font-semibold text-gray-900">
+              Your Stocks
+            </h3>
+          </div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -183,7 +223,17 @@ export default function InstrumentsPage() {
               )}
             </tbody>
           </table>
-        ) : (
+        </div>
+      )}
+
+      {/* Mutual Funds Table */}
+      {showMutualFunds && (
+        <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <h3 className="text-base font-semibold text-gray-900">
+              Your Mutual Funds
+            </h3>
+          </div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -245,8 +295,8 @@ export default function InstrumentsPage() {
               )}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
