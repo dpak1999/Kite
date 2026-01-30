@@ -3,7 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useUser } from "@clerk/clerk-expo";
 import LoginScreen from "../screens/LoginScreen";
-import HomeScreen from "../screens/HomeScreen";
+import TabNavigator from "./TabNavigator";
 
 const Stack = createNativeStackNavigator();
 
@@ -18,11 +18,11 @@ const Navigation = () => {
     <NavigationContainer>
       <Stack.Navigator
         id={undefined}
-        initialRouteName={isSignedIn ? "HomeScreen" : "LoginScreen"}
+        initialRouteName={isSignedIn ? "TabNavigator" : "LoginScreen"}
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="HomeScreen" component={HomeScreen} />
+        <Stack.Screen name="TabNavigator" component={TabNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
   );

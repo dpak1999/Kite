@@ -10,13 +10,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  SafeAreaView,
 } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 import { useSignIn, useSignUp } from "@clerk/clerk-expo";
 
 const LoginScreen = ({ navigation }) => {
-  const { signIn, setActive: setSignInActive, isLoaded: isSignInLoaded } = useSignIn();
-  const { signUp, setActive: setSignUpActive, isLoaded: isSignUpLoaded } = useSignUp();
+  const {
+    signIn,
+    setActive: setSignInActive,
+    isLoaded: isSignInLoaded,
+  } = useSignIn();
+  const {
+    signUp,
+    setActive: setSignUpActive,
+    isLoaded: isSignUpLoaded,
+  } = useSignUp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +48,7 @@ const LoginScreen = ({ navigation }) => {
 
       if (result.status === "complete") {
         await setSignInActive({ session: result.createdSessionId });
-        navigation.navigate("HomeScreen");
+        navigation.navigate("TabNavigator");
       }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || "Sign in failed");
@@ -80,7 +89,7 @@ const LoginScreen = ({ navigation }) => {
 
       if (result.status === "complete") {
         await setSignUpActive({ session: result.createdSessionId });
-        navigation.navigate("HomeScreen");
+        navigation.navigate("TabNavigator");
       }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || "Verification failed");
@@ -91,41 +100,48 @@ const LoginScreen = ({ navigation }) => {
 
   if (pendingVerification) {
     return (
-      <View style={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Verify your email</Text>
-          <Text style={styles.subtitle}>
-            We sent a verification code to {email}
-          </Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Image
+            source={require("../../assets/kite-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Verify Email</Text>
+          <Text style={styles.subtitle}>Code sent to {email}</Text>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <TextInput
             style={styles.input}
-            placeholder="Verification code"
+            placeholder="Verification Code"
             value={verificationCode}
             onChangeText={setVerificationCode}
             keyboardType="number-pad"
             autoCapitalize="none"
+            placeholderTextColor="#999"
           />
 
           <TouchableOpacity
-            style={styles.buttonEmail}
+            style={styles.button}
             onPress={handleVerification}
             disabled={isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text style={styles.buttonText}>Verify Email</Text>
+              <Text style={styles.buttonText}>Verify</Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => setPendingVerification(false)}>
-            <Text style={styles.linkText}>Go back</Text>
+          <TouchableOpacity
+            onPress={() => setPendingVerification(false)}
+            style={styles.linkButton}
+          >
+            <Text style={styles.linkText}>Back to Sign Up</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -134,65 +150,72 @@ const LoginScreen = ({ navigation }) => {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.card}>
-          <Image
-            source={require("../assets/icons/logo.png")}
-            style={styles.logo}
-          />
-          <Text style={styles.title}>
-            {isSignUp ? "Create your account" : "Log in to your account"}
-          </Text>
-          <Text style={styles.subtitle}>
-            {isSignUp
-              ? "Sign up with your email below."
-              : "Welcome! Please login below."}
-          </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <View style={styles.headerContainer}>
+            <Image
+              source={require("../../assets/kite-logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.headerTitle}>Login to Kite</Text>
+          </View>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g using@zerodha.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholderTextColor="#999"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              placeholderTextColor="#999"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-          />
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <TouchableOpacity
-            style={styles.buttonEmail}
-            onPress={isSignUp ? handleSignUp : handleSignIn}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {isSignUp ? "Sign Up" : "Sign In"}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <View style={styles.signupContainer}>
-            <Text style={{ fontFamily: "Regular" }}>
-              {isSignUp ? "Already have an account? " : "Don't have an account? "}
-            </Text>
-            <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)}>
-              <Text style={styles.signupText}>
-                {isSignUp ? "Sign in" : "Sign up"}
-              </Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={isSignUp ? handleSignUp : handleSignIn}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {isSignUp ? "Sign Up" : "Login"}
+                </Text>
+              )}
             </TouchableOpacity>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                {isSignUp
+                  ? "Already have an account?"
+                  : "Don't have an account?"}
+              </Text>
+              <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)}>
+                <Text style={styles.linkText}>
+                  {isSignUp ? "Login" : "Sign up"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -207,77 +230,105 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 24,
     justifyContent: "center",
   },
-  card: {
-    backgroundColor: "#fff",
-    padding: 20,
+  headerContainer: {
     alignItems: "center",
-    width: "100%",
+    marginBottom: 40,
   },
   logo: {
-    width: 74,
-    height: 74,
-    marginTop: 20,
+    width: 60,
+    height: 60,
+    marginBottom: 16,
   },
-  title: {
-    marginTop: 49,
-    fontSize: RFValue(21),
+  headerTitle: {
+    fontSize: RFValue(24),
     fontFamily: "SemiBold",
+    color: "#444",
   },
-  subtitle: {
-    marginTop: 8,
-    fontSize: RFValue(14),
-    color: "#000",
-    fontFamily: "Regular",
-    marginBottom: 32,
-    textAlign: "center",
+  formContainer: {
+    width: "100%",
+  },
+  label: {
+    fontSize: RFValue(12),
+    fontFamily: "Medium",
+    color: "#999",
+    marginBottom: 8,
+    marginTop: 12,
   },
   input: {
     width: "100%",
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 16,
-    fontFamily: "Regular",
+    borderColor: "#e0e0e0",
+    borderRadius: 4,
+    padding: 12,
     fontSize: RFValue(14),
+    fontFamily: "Regular",
+    color: "#444",
+    backgroundColor: "#fff",
   },
-  buttonEmail: {
-    backgroundColor: "#0D87E1",
-    padding: 15,
-    borderRadius: 10,
-    width: "100%",
-    marginBottom: 24,
-    minHeight: 44,
-    justifyContent: "center",
+  button: {
+    backgroundColor: "#ff5722", // Kite Orange
+    paddingVertical: 14,
+    borderRadius: 4,
+    marginTop: 32,
     alignItems: "center",
+    shadowColor: "#ff5722",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   buttonText: {
-    textAlign: "center",
-    color: "#FFF",
-    fontFamily: "SemiBold",
+    color: "#fff",
     fontSize: RFValue(14),
-  },
-  signupContainer: {
-    flexDirection: "row",
-  },
-  signupText: {
-    color: "#0D87E1",
     fontFamily: "SemiBold",
-  },
-  linkText: {
-    color: "#0D87E1",
-    fontFamily: "Medium",
-    fontSize: RFValue(14),
+    textTransform: "uppercase",
   },
   errorText: {
+    color: "#D32F2F", // Red for error
+    fontSize: RFValue(12),
+    fontFamily: "Regular",
+    marginTop: 12,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+    gap: 4,
+  },
+  footerText: {
+    color: "#666",
     fontSize: RFValue(14),
-    color: "tomato",
-    fontFamily: "Medium",
-    alignSelf: "flex-start",
+    fontFamily: "Regular",
+  },
+  linkText: {
+    color: "#ff5722",
+    fontSize: RFValue(14),
+    fontFamily: "SemiBold",
+  },
+  // Verification screen specific
+  title: {
+    fontSize: RFValue(20),
+    fontFamily: "SemiBold",
+    color: "#444",
+    textAlign: "center",
     marginBottom: 8,
-    marginLeft: 4,
+  },
+  subtitle: {
+    fontSize: RFValue(14),
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 32,
+    fontFamily: "Regular",
+  },
+  linkButton: {
+    marginTop: 20,
+    alignItems: "center",
   },
 });
 
