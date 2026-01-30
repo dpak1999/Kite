@@ -57,9 +57,20 @@ export default defineSchema({
     category: v.optional(v.string()),
     fundManager: v.optional(v.string()),
     addedAt: v.number(),
+    mfapiSchemeCode: v.optional(v.number()),
+    hasHistoricalData: v.optional(v.boolean()),
   })
     .index("by_schemeId", ["schemeId"])
     .index("by_addedAt", ["addedAt"]),
+
+  // Mutual Fund Historical Data - daily NAV data
+  mutualFundHistoricalData: defineTable({
+    mutualFundId: v.id("mutualFunds"),
+    date: v.string(),
+    nav: v.number(),
+  })
+    .index("by_mutualFundId", ["mutualFundId"])
+    .index("by_mutualFundId_date", ["mutualFundId", "date"]),
 
   // User's stock holdings - tracks what stocks each user owns
   userStockHoldings: defineTable({

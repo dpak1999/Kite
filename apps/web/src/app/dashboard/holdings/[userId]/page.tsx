@@ -46,6 +46,7 @@ export default function UserHoldingsPage() {
   const [formQty, setFormQty] = useState("");
   const [formPrice, setFormPrice] = useState("");
   const [formMF, setFormMF] = useState("");
+  const [formMFDate, setFormMFDate] = useState("");
   const [formUnits, setFormUnits] = useState("");
   const [formNav, setFormNav] = useState("");
 
@@ -55,7 +56,13 @@ export default function UserHoldingsPage() {
     formStock ? { stockId: formStock as Id<"stocks"> } : "skip",
   );
 
-  // When date is selected, auto-fill price
+  // Fetch historical data for the selected mutual fund
+  const selectedMFHistoricalData = useQuery(
+    api.mutualFunds.getHistoricalData,
+    formMF ? { mutualFundId: formMF as Id<"mutualFunds"> } : "skip",
+  );
+
+  // When date is selected for stock, auto-fill price
   const handleDateChange = (date: string) => {
     setFormDate(date);
     if (date && selectedStockHistoricalData) {
@@ -66,11 +73,29 @@ export default function UserHoldingsPage() {
     }
   };
 
+  // When date is selected for MF, auto-fill NAV
+  const handleMFDateChange = (date: string) => {
+    setFormMFDate(date);
+    if (date && selectedMFHistoricalData) {
+      const point = selectedMFHistoricalData.find((p) => p.date === date);
+      if (point) {
+        setFormNav(point.nav.toFixed(4));
+      }
+    }
+  };
+
   // Reset form when stock changes
   const handleStockChange = (stockId: string) => {
     setFormStock(stockId);
     setFormDate("");
     setFormPrice("");
+  };
+
+  // Reset form when MF changes
+  const handleMFChange = (mfId: string) => {
+    setFormMF(mfId);
+    setFormMFDate("");
+    setFormNav("");
   };
   const handleAddStock = async () => {
     if (!formStock || !formQty || !formPrice) return;
@@ -480,7 +505,7 @@ export default function UserHoldingsPage() {
                 </label>
                 <select
                   value={formMF}
-                  onChange={(e) => setFormMF(e.target.value)}
+                  onChange={(e) => handleMFChange(e.target.value)}
                   className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="">Select a fund...</option>
@@ -491,6 +516,27 @@ export default function UserHoldingsPage() {
                   ))}
                 </select>
               </div>
+              {formMF &&
+                selectedMFHistoricalData &&
+                selectedMFHistoricalData.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Purchase Date (optional)
+                    </label>
+                    <select
+                      value={formMFDate}
+                      onChange={(e) => handleMFDateChange(e.target.value)}
+                      className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Select date to auto-fill NAV...</option>
+                      {selectedMFHistoricalData.map((point) => (
+                        <option key={point._id} value={point.date}>
+                          {point.date} - ₹{point.nav.toFixed(4)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Units
@@ -510,11 +556,11 @@ export default function UserHoldingsPage() {
                 </label>
                 <input
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   value={formNav}
-                  onChange={(e) => setFormNav(e.target.value)}
-                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter NAV"
+                  readOnly
+                  className="w-full p-2.5 rounded-md border border-gray-300 shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Select date above to set NAV"
                 />
               </div>
               <button

@@ -61,10 +61,21 @@ export const add = mutation({
   },
 });
 
-// Remove a mutual fund
+// Remove a mutual fund and its historical data
 export const remove = mutation({
   args: { id: v.id("mutualFunds") },
   handler: async (ctx, args) => {
+    // Delete all historical data for this MF first
+    const historicalData = await ctx.db
+      .query("mutualFundHistoricalData")
+      .withIndex("by_mutualFundId", (q) => q.eq("mutualFundId", args.id))
+      .collect();
+
+    for (const record of historicalData) {
+      await ctx.db.delete(record._id);
+    }
+
+    // Then delete the mutual fund itself
     await ctx.db.delete(args.id);
   },
 });
@@ -78,5 +89,17 @@ export const updateNav = mutation({
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     await ctx.db.patch(id, updates);
+  },
+});
+
+// Get historical data for a mutual fund
+export const getHistoricalData = query({
+  args: { mutualFundId: v.id("mutualFunds") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("mutualFundHistoricalData")
+      .withIndex("by_mutualFundId", (q) => q.eq("mutualFundId", args.mutualFundId))
+      .order("desc")
+      .collect();
   },
 });

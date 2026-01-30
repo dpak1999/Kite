@@ -21,7 +21,12 @@ export default function InstrumentsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [fetchingHistorical, setFetchingHistorical] = useState(false);
+  const [fetchingMfHistorical, setFetchingMfHistorical] = useState(false);
   const [fetchResult, setFetchResult] = useState<{
+    total: number;
+    success: number;
+  } | null>(null);
+  const [fetchMfResult, setFetchMfResult] = useState<{
     total: number;
     success: number;
   } | null>(null);
@@ -46,6 +51,7 @@ export default function InstrumentsPage() {
 
   // Actions
   const fetchAllHistorical = useAction(api.stockApi.fetchAllHistoricalData);
+  const fetchAllMfHistorical = useAction(api.mfApi.fetchAllMfHistoricalData);
 
   const handleRefresh = () => setRefreshKey((k) => k + 1);
 
@@ -75,6 +81,20 @@ export default function InstrumentsPage() {
     }
   };
 
+  const handleFetchMfHistoricalData = async () => {
+    setFetchingMfHistorical(true);
+    setFetchMfResult(null);
+    try {
+      const result = await fetchAllMfHistorical();
+      const successCount = result.results.filter((r) => r.success).length;
+      setFetchMfResult({ total: result.total, success: successCount });
+    } catch (error) {
+      console.error("Failed to fetch MF historical data:", error);
+    } finally {
+      setFetchingMfHistorical(false);
+    }
+  };
+
   // Use 0 for counts during SSR to prevent hydration mismatch
   const stockCount = mounted ? stocks?.length || 0 : 0;
   const mfCount = mounted ? mutualFunds?.length || 0 : 0;
@@ -83,6 +103,11 @@ export default function InstrumentsPage() {
   // Count stocks without historical data
   const stocksWithoutHistory = mounted
     ? stocks?.filter((s) => !s.hasHistoricalData).length || 0
+    : 0;
+
+  // Count MFs without historical data
+  const mfsWithoutHistory = mounted
+    ? mutualFunds?.filter((mf) => !mf.hasHistoricalData).length || 0
     : 0;
 
   const tabs = [
@@ -105,10 +130,10 @@ export default function InstrumentsPage() {
             Search and add stocks or mutual funds to your watchlist
           </p>
         </div>
-        <div className="mt-4 flex gap-3 md:ml-4 md:mt-0">
+        <div className="mt-4 flex flex-wrap gap-3 md:ml-4 md:mt-0">
           {fetchResult && (
             <span className="text-sm text-green-600 self-center">
-              Fetched {fetchResult.success}/{fetchResult.total} stocks
+              Stocks: {fetchResult.success}/{fetchResult.total}
             </span>
           )}
           <button
@@ -128,7 +153,33 @@ export default function InstrumentsPage() {
             ) : (
               <>
                 <ClockIcon className="h-4 w-4" />
-                Fetch Historical ({stocksWithoutHistory})
+                Stocks ({stocksWithoutHistory})
+              </>
+            )}
+          </button>
+          {fetchMfResult && (
+            <span className="text-sm text-green-600 self-center">
+              MFs: {fetchMfResult.success}/{fetchMfResult.total}
+            </span>
+          )}
+          <button
+            onClick={handleFetchMfHistoricalData}
+            disabled={fetchingMfHistorical || mfsWithoutHistory === 0}
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold shadow-sm ${
+              fetchingMfHistorical || mfsWithoutHistory === 0
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-purple-600 text-white hover:bg-purple-500"
+            }`}
+          >
+            {fetchingMfHistorical ? (
+              <>
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                Fetching...
+              </>
+            ) : (
+              <>
+                <ClockIcon className="h-4 w-4" />
+                MFs ({mfsWithoutHistory})
               </>
             )}
           </button>
