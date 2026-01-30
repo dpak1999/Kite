@@ -1,5 +1,6 @@
-import { action } from "./_generated/server";
+import { action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 const INDIAN_STOCK_API_URL = "https://stock.indianapi.in";
 
@@ -110,5 +111,188 @@ export const getMutualFundDetails = action({
       console.error("Mutual fund details error:", error);
       return null;
     }
+  },
+});
+
+// Internal mutation to save historical data
+export const saveHistoricalData = internalMutation({
+  args: {
+    stockId: v.id("stocks"),
+    dataPoints: v.array(
+      v.object({
+        date: v.string(),
+        price: v.number(),
+        dma50: v.optional(v.number()),
+        dma200: v.optional(v.number()),
+        volume: v.optional(v.number()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    // Insert all data points
+    for (const point of args.dataPoints) {
+      await ctx.db.insert("stockHistoricalData", {
+        stockId: args.stockId,
+        ...point,
+      });
+    }
+
+    // Mark stock as having historical data
+    await ctx.db.patch(args.stockId, { hasHistoricalData: true });
+
+    return args.dataPoints.length;
+  },
+});
+
+// Fetch historical data for a stock (can be called from frontend for individual stock)
+export const fetchStockHistoricalData = action({
+  args: { stockId: v.id("stocks"), stockName: v.string() },
+  handler: async (ctx, args): Promise<{ success: boolean; count?: number; error?: string }> => {
+    try {
+      const data = await fetchFromApi("/historical_data", {
+        stock_name: args.stockName,
+        period: "5yr",
+        filter: "default",
+      });
+
+      if (!data || !data.datasets) {
+        return { success: false, error: "No data returned" };
+      }
+
+      // Find the price, DMA50, DMA200, and Volume datasets
+      const priceDataset = data.datasets.find((d: any) => d.metric === "Price");
+      const dma50Dataset = data.datasets.find((d: any) => d.metric === "DMA50");
+      const dma200Dataset = data.datasets.find((d: any) => d.metric === "DMA200");
+      const volumeDataset = data.datasets.find((d: any) => d.metric === "Volume");
+
+      if (!priceDataset?.values) {
+        return { success: false, error: "No price data found" };
+      }
+
+      // Build data points array
+      const dataPoints: {
+        date: string;
+        price: number;
+        dma50?: number;
+        dma200?: number;
+        volume?: number;
+      }[] = [];
+
+      for (const [date, priceStr] of priceDataset.values) {
+        const price = parseFloat(priceStr);
+        if (isNaN(price)) continue;
+
+        // Find corresponding DMA50, DMA200, Volume for this date
+        const dma50Entry = dma50Dataset?.values?.find((v: any) => v[0] === date);
+        const dma200Entry = dma200Dataset?.values?.find((v: any) => v[0] === date);
+        const volumeEntry = volumeDataset?.values?.find((v: any) => v[0] === date);
+
+        dataPoints.push({
+          date,
+          price,
+          dma50: dma50Entry ? parseFloat(dma50Entry[1]) : undefined,
+          dma200: dma200Entry ? parseFloat(dma200Entry[1]) : undefined,
+          volume: volumeEntry ? (typeof volumeEntry[1] === "number" ? volumeEntry[1] : undefined) : undefined,
+        });
+      }
+
+      // Save to database using internal mutation
+      const count = await ctx.runMutation(internal.stockApi.saveHistoricalData, {
+        stockId: args.stockId,
+        dataPoints,
+      });
+
+      return { success: true, count };
+    } catch (error) {
+      console.error("Historical data fetch error:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+});
+
+// Internal query to get stocks without historical data
+import { internalQuery } from "./_generated/server";
+
+export const getStocksWithoutHistory = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const stocks = await ctx.db.query("stocks").collect();
+    return stocks.filter((s) => !s.hasHistoricalData);
+  },
+});
+
+// Fetch historical data for all stocks that don't have it yet
+export const fetchAllHistoricalData = action({
+  args: {},
+  handler: async (ctx): Promise<{
+    total: number;
+    results: { symbol: string; success: boolean; count?: number; error?: string }[];
+  }> => {
+    // Get all stocks without historical data
+    const stocks = await ctx.runQuery(internal.stockApi.getStocksWithoutHistory);
+
+    const results: { symbol: string; success: boolean; count?: number; error?: string }[] = [];
+
+    for (const stock of stocks) {
+      try {
+        // Fetch historical data for this stock
+        const data = await fetchFromApi("/historical_data", {
+          stock_name: stock.companyName,
+          period: "5yr",
+          filter: "default",
+        });
+
+        if (!data || !data.datasets) {
+          results.push({ symbol: stock.symbol, success: false, error: "No data returned" });
+          continue;
+        }
+
+        const priceDataset = data.datasets.find((d: any) => d.metric === "Price");
+        const dma50Dataset = data.datasets.find((d: any) => d.metric === "DMA50");
+        const dma200Dataset = data.datasets.find((d: any) => d.metric === "DMA200");
+        const volumeDataset = data.datasets.find((d: any) => d.metric === "Volume");
+
+        if (!priceDataset?.values) {
+          results.push({ symbol: stock.symbol, success: false, error: "No price data" });
+          continue;
+        }
+
+        const dataPoints: {
+          date: string;
+          price: number;
+          dma50?: number;
+          dma200?: number;
+          volume?: number;
+        }[] = [];
+
+        for (const [date, priceStr] of priceDataset.values) {
+          const price = parseFloat(priceStr);
+          if (isNaN(price)) continue;
+
+          const dma50Entry = dma50Dataset?.values?.find((v: any) => v[0] === date);
+          const dma200Entry = dma200Dataset?.values?.find((v: any) => v[0] === date);
+          const volumeEntry = volumeDataset?.values?.find((v: any) => v[0] === date);
+
+          dataPoints.push({
+            date,
+            price,
+            dma50: dma50Entry ? parseFloat(dma50Entry[1]) : undefined,
+            dma200: dma200Entry ? parseFloat(dma200Entry[1]) : undefined,
+            volume: volumeEntry ? (typeof volumeEntry[1] === "number" ? volumeEntry[1] : undefined) : undefined,
+          });
+        }
+
+        const count = await ctx.runMutation(internal.stockApi.saveHistoricalData, {
+          stockId: stock._id,
+          dataPoints,
+        });
+
+        results.push({ symbol: stock.symbol, success: true, count });
+      } catch (error) {
+        results.push({ symbol: stock.symbol, success: false, error: String(error) });
+      }
+    }
+
+    return { total: stocks.length, results };
   },
 });

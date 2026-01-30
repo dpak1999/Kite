@@ -27,9 +27,22 @@ export default defineSchema({
     yearHigh: v.optional(v.number()),
     yearLow: v.optional(v.number()),
     addedAt: v.number(),
+    hasHistoricalData: v.optional(v.boolean()),
   })
     .index("by_symbol", ["symbol"])
     .index("by_addedAt", ["addedAt"]),
+
+  // Stock Historical Data - daily price data
+  stockHistoricalData: defineTable({
+    stockId: v.id("stocks"),
+    date: v.string(),
+    price: v.number(),
+    dma50: v.optional(v.number()),
+    dma200: v.optional(v.number()),
+    volume: v.optional(v.number()),
+  })
+    .index("by_stockId", ["stockId"])
+    .index("by_stockId_date", ["stockId", "date"]),
 
   // Mutual Funds table - available mutual funds (admin-added)
   mutualFunds: defineTable({

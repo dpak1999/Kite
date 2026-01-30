@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { TrashIcon } from "@heroicons/react/20/solid";
-import { useQuery, useMutation } from "convex/react";
+import { TrashIcon, ArrowPathIcon, ClockIcon } from "@heroicons/react/20/solid";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@packages/backend/convex/_generated/api";
 import StockSearch from "./components/StockSearch";
 import MutualFundSearch from "./components/MutualFundSearch";
@@ -13,6 +13,11 @@ export default function InstrumentsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [refreshKey, setRefreshKey] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [fetchingHistorical, setFetchingHistorical] = useState(false);
+  const [fetchResult, setFetchResult] = useState<{
+    total: number;
+    success: number;
+  } | null>(null);
 
   // Ensure we only render dynamic content after hydration
   useEffect(() => {
@@ -26,6 +31,9 @@ export default function InstrumentsPage() {
   // Mutations
   const removeStock = useMutation(api.stocks.remove);
   const removeMutualFund = useMutation(api.mutualFunds.remove);
+
+  // Actions
+  const fetchAllHistorical = useAction(api.stockApi.fetchAllHistoricalData);
 
   const handleRefresh = () => setRefreshKey((k) => k + 1);
 
@@ -41,10 +49,29 @@ export default function InstrumentsPage() {
     }
   };
 
+  const handleFetchHistoricalData = async () => {
+    setFetchingHistorical(true);
+    setFetchResult(null);
+    try {
+      const result = await fetchAllHistorical();
+      const successCount = result.results.filter((r) => r.success).length;
+      setFetchResult({ total: result.total, success: successCount });
+    } catch (error) {
+      console.error("Failed to fetch historical data:", error);
+    } finally {
+      setFetchingHistorical(false);
+    }
+  };
+
   // Use 0 for counts during SSR to prevent hydration mismatch
   const stockCount = mounted ? stocks?.length || 0 : 0;
   const mfCount = mounted ? mutualFunds?.length || 0 : 0;
   const totalCount = stockCount + mfCount;
+
+  // Count stocks without historical data
+  const stocksWithoutHistory = mounted
+    ? stocks?.filter((s) => !s.hasHistoricalData).length || 0
+    : 0;
 
   const tabs = [
     { id: "all" as TabType, name: "All", count: totalCount },
@@ -65,6 +92,34 @@ export default function InstrumentsPage() {
           <p className="mt-1 text-sm text-gray-500">
             Search and add stocks or mutual funds to your watchlist
           </p>
+        </div>
+        <div className="mt-4 flex gap-3 md:ml-4 md:mt-0">
+          {fetchResult && (
+            <span className="text-sm text-green-600 self-center">
+              Fetched {fetchResult.success}/{fetchResult.total} stocks
+            </span>
+          )}
+          <button
+            onClick={handleFetchHistoricalData}
+            disabled={fetchingHistorical || stocksWithoutHistory === 0}
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold shadow-sm ${
+              fetchingHistorical || stocksWithoutHistory === 0
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-500"
+            }`}
+          >
+            {fetchingHistorical ? (
+              <>
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                Fetching...
+              </>
+            ) : (
+              <>
+                <ClockIcon className="h-4 w-4" />
+                Fetch Historical ({stocksWithoutHistory})
+              </>
+            )}
+          </button>
         </div>
       </div>
 
