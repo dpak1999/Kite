@@ -13,6 +13,7 @@ import { Id } from "@packages/backend/convex/_generated/dataModel";
 import StockSearch from "./components/StockSearch";
 import MutualFundSearch from "./components/MutualFundSearch";
 import StockHistoryModal from "./components/StockHistoryModal";
+import MfHistoryModal from "./components/MfHistoryModal";
 
 type TabType = "all" | "stocks" | "mutualFunds";
 
@@ -34,6 +35,10 @@ export default function InstrumentsPage() {
     id: Id<"stocks">;
     symbol: string;
     name: string;
+  } | null>(null);
+  const [selectedMfForHistory, setSelectedMfForHistory] = useState<{
+    id: Id<"mutualFunds">;
+    schemeName: string;
   } | null>(null);
 
   // Ensure we only render dynamic content after hydration
@@ -413,10 +418,31 @@ export default function InstrumentsPage() {
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                     <button
                       onClick={() => handleDeleteMutualFund(fund._id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 ml-4"
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
+                    {fund.hasHistoricalData ? (
+                      <button
+                        onClick={() =>
+                          setSelectedMfForHistory({
+                            id: fund._id,
+                            schemeName: fund.schemeName,
+                          })
+                        }
+                        className="text-blue-600 hover:text-blue-900 ml-4"
+                        title="View Historical NAV"
+                      >
+                        <ChartBarIcon className="h-5 w-5" />
+                      </button>
+                    ) : (
+                      <span
+                        className="text-gray-300 ml-4"
+                        title="No historical data"
+                      >
+                        <ChartBarIcon className="h-5 w-5" />
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -439,6 +465,15 @@ export default function InstrumentsPage() {
           stockSymbol={selectedStockForHistory.symbol}
           stockName={selectedStockForHistory.name}
           onClose={() => setSelectedStockForHistory(null)}
+        />
+      )}
+
+      {/* MF History Modal */}
+      {selectedMfForHistory && (
+        <MfHistoryModal
+          mutualFundId={selectedMfForHistory.id}
+          schemeName={selectedMfForHistory.schemeName}
+          onClose={() => setSelectedMfForHistory(null)}
         />
       )}
     </div>

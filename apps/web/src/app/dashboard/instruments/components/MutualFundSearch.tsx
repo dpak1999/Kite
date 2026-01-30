@@ -153,7 +153,7 @@ export default function MutualFundSearch({
                 <button
                   onClick={() => handleAdd(fund)}
                   disabled={addingId === fund.schemeId}
-                  className="inline-flex items-center rounded-md bg-green-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-green-500 disabled:opacity-50 flex-shrink-0"
+                  className="inline-flex items-center rounded-md bg-green-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-green-500 disabled:opacity-50 shrink-0"
                 >
                   <PlusIcon className="h-3.5 w-3.5 mr-0.5" />
                   {addingId === fund.schemeId ? "Adding..." : "Add"}
